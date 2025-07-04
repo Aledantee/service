@@ -1,3 +1,25 @@
 module github.com/aledantee/service
 
-go 1.24
+go 1.24.3
+
+toolchain go1.24.4
+
+tool golang.org/x/tools/cmd/stringer
+
+require (
+	go.opentelemetry.io/otel/metric v1.37.0
+	go.opentelemetry.io/otel/trace v1.37.0
+)
+
+require (
+	github.com/DataDog/gostackparse v0.7.0 // indirect
+	github.com/aledantee/ae v0.0.4 // indirect
+	github.com/fatih/color v1.18.0 // indirect
+	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-isatty v0.0.20 // indirect
+	go.opentelemetry.io/otel v1.37.0 // indirect
+	golang.org/x/mod v0.25.0 // indirect
+	golang.org/x/sync v0.15.0 // indirect
+	golang.org/x/sys v0.33.0 // indirect
+	golang.org/x/tools v0.34.0 // indirect
+)
