@@ -49,6 +49,11 @@ func Logger(ctx context.Context) *slog.Logger {
 	return logger
 }
 
+// withLogger returns a new context with the provided logger.
+func withLogger(ctx context.Context, logger *slog.Logger) context.Context {
+	return context.WithValue(ctx, loggerKey{}, logger)
+}
+
 // Name retrieves the service name from the context.
 // Returns an empty string if no name is found in the context.
 //
@@ -61,6 +66,11 @@ func Name(ctx context.Context) string {
 	}
 
 	return name
+}
+
+// withName returns a new context with the provided name.
+func withName(ctx context.Context, name string) context.Context {
+	return context.WithValue(ctx, nameKey{}, name)
 }
 
 // Version retrieves the service version from the context.
@@ -77,6 +87,11 @@ func Version(ctx context.Context) string {
 	return version
 }
 
+// withVersion returns a new context with the provided version.
+func withVersion(ctx context.Context, version string) context.Context {
+	return context.WithValue(ctx, versionKey{}, version)
+}
+
 // OTelTracer retrieves an OpenTelemetry service tracer from the context.
 // Returns a no-op tracer if no tracer is found in the context.
 //
@@ -89,6 +104,11 @@ func OTelTracer(ctx context.Context) trace.Tracer {
 	}
 
 	return tracer
+}
+
+// withOTelTracer returns a new context with the provided tracer.
+func withOTelTracer(ctx context.Context, tracer trace.Tracer) context.Context {
+	return context.WithValue(ctx, otelTracerKey{}, tracer)
 }
 
 // OTelTracerProvider retrieves an OpenTelemetry service tracer provider from the context.
@@ -105,6 +125,11 @@ func OTelTracerProvider(ctx context.Context) trace.TracerProvider {
 	return tracerProvider
 }
 
+// withOTelTracerProvider returns a new context with the provided tracer provider.
+func withOTelTracerProvider(ctx context.Context, tracerProvider trace.TracerProvider) context.Context {
+	return context.WithValue(ctx, otelTracerProviderKey{}, tracerProvider)
+}
+
 // OTelMeter retrieves an OpenTelemetry meter from the context.
 // Returns a no-op meter if no meter is found in the context.
 //
@@ -119,6 +144,11 @@ func OTelMeter(ctx context.Context) metric.Meter {
 	return meter
 }
 
+// withOTelMeter returns a new context with the provided meter.
+func withOTelMeter(ctx context.Context, meter metric.Meter) context.Context {
+	return context.WithValue(ctx, otelMeterKey{}, meter)
+}
+
 // OTelMeterProvider retrieves an OpenTelemetry meter provider from the context.
 // Returns a no-op meter provider if no provider is found in the context.
 //
@@ -131,4 +161,9 @@ func OTelMeterProvider(ctx context.Context) metric.MeterProvider {
 	}
 
 	return meterProvider
+}
+
+// withOTelMeterProvider returns a new context with the provided meter provider.
+func withOTelMeterProvider(ctx context.Context, meterProvider metric.MeterProvider) context.Context {
+	return context.WithValue(ctx, otelMeterProviderKey{}, meterProvider)
 }

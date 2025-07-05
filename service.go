@@ -3,6 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	sdkMetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdkTrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"log/slog"
 	"sync"
 
@@ -10,6 +14,8 @@ import (
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
+
+const otelName = "github.com/aledantee/service"
 
 // Service represents a long-running component that follows a specific lifecycle:
 // initialization, running, and shutdown phases. It provides a structured approach
@@ -128,8 +134,8 @@ func (s *Service) OtelTracerProvider() trace.TracerProvider {
 // Returns an error if any step fails, with context.Canceled errors being treated as normal termination.
 func (s *Service) Execute(ctx context.Context) error {
 	errBuilder := ae.New().
-		Attr("name", s.Name).
-		Attr("version", s.Version)
+		Attr("service.name", s.Name).
+		Attr("service.version", s.Version)
 
 	if s.Run == nil {
 		return errBuilder.Msg("service has no Run method")
@@ -141,6 +147,8 @@ func (s *Service) Execute(ctx context.Context) error {
 		return errBuilder.Msg("service is already running")
 	}
 	s.phaseMtx.Unlock()
+
+	s.runCtx = withName(withVersion(ctx, s.Version), s.Name)
 
 	s.setPhase(PhaseInitializing)
 
@@ -198,5 +206,31 @@ func (s *Service) setPhase(phase Phase) {
 // See the OpenTelemetry documentation for more information on how to configure OpenTelemetry using environment variables.
 // https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/#general-sdk-configuration
 func (s *Service) initOtel(ctx context.Context) error {
+	res, err := resource.New(ctx,
+		resource.WithAttributes(
+			semconv.ServiceName(s.Name),
+			semconv.ServiceVersion(s.Version),
+		),
+	)
+	if err != nil {
+		return ae.New().
+			Attr("service.name", s.Name).
+			Attr("service.version", s.Version).
+			Cause(err).
+			Msg("failed to create resource")
+	}
+
+	meterProvider := sdkMetric.NewMeterProvider(sdkMetric.WithResource(res))
+	s.runCtx = withOTelMeterProvider(s.runCtx, meterProvider)
+
+	tracerProvider := sdkTrace.NewTracerProvider(sdkTrace.WithResource(res))
+	s.runCtx = withOTelTracerProvider(s.runCtx, tracerProvider)
+
+	meter := meterProvider.Meter(otelName)
+	s.runCtx = withOTelMeter(s.runCtx, meter)
+
+	tracer := tracerProvider.Tracer(otelName)
+	s.runCtx = withOTelTracer(s.runCtx, tracer)
+
 	return nil
 }
