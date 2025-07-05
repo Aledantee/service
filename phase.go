@@ -7,10 +7,9 @@ package service
 type Phase int
 
 const (
-	PhaseUnspecified Phase = iota
 	// PhaseWaiting indicates the service is waiting to begin initialization.
 	// This is the initial state before any lifecycle methods are called.
-	PhaseWaiting
+	PhaseWaiting Phase = iota
 	// PhaseInitializing indicates the service is currently executing its Init method.
 	// During this phase, the service performs one-time setup tasks.
 	PhaseInitializing
