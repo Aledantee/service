@@ -14,6 +14,7 @@ func main() {
 			cause := ae.New().
 				Tag("component1").
 				Hint("do the thing").
+				ExitCode(200).
 				Msg("failed")
 
 			return ae.Wrap("some error", cause)
