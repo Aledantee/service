@@ -3,14 +3,15 @@ package service
 import (
 	"context"
 	"errors"
-	sdkMetric "go.opentelemetry.io/otel/sdk/metric"
-	"go.opentelemetry.io/otel/sdk/resource"
-	sdkTrace "go.opentelemetry.io/otel/sdk/trace"
-	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"log/slog"
 	"os"
 	"strings"
 	"sync"
+
+	sdkMetric "go.opentelemetry.io/otel/sdk/metric"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdkTrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 
 	"github.com/aledantee/ae"
 	"go.opentelemetry.io/otel/metric"
@@ -122,10 +123,15 @@ func (s *Service) OtelTracerProvider() trace.TracerProvider {
 	return OTelTracerProvider(s.Context())
 }
 
+// ExecuteExit executes the service with context.Background() and exits the program
+// if an error occurs. It calls os.Exit with the appropriate exit code.
 func (s *Service) ExecuteExit() {
 	s.ExecuteExitContext(context.Background())
 }
 
+// ExecuteExitContext executes the service with the provided context and exits the program
+// if an error occurs. It calls os.Exit with the appropriate exit code.
+// If the error is context.Canceled, it will not print the error but will still exit.
 func (s *Service) ExecuteExitContext(ctx context.Context) {
 	if err := s.execute(ctx); err != nil {
 		if !errors.Is(err, context.Canceled) {
@@ -136,14 +142,17 @@ func (s *Service) ExecuteExitContext(ctx context.Context) {
 	}
 }
 
+// Execute executes the service with context.Background() and returns any error that occurs.
 func (s *Service) Execute() error {
 	return s.execute(context.Background())
 }
 
+// ExecuteContext executes the service with the provided context and returns any error that occurs.
 func (s *Service) ExecuteContext(ctx context.Context) error {
 	return s.execute(ctx)
 }
 
+// execute is the internal common execution logic for all Execute* methods.
 func (s *Service) execute(ctx context.Context) error {
 	errBuilder := ae.New().
 		Attr("service.name", s.Name).
