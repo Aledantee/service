@@ -8,18 +8,17 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[PhaseUnspecified-0]
-	_ = x[PhaseWaiting-1]
-	_ = x[PhaseInitializing-2]
-	_ = x[PhaseRunning-3]
-	_ = x[PhaseShuttingDown-4]
-	_ = x[PhaseError-5]
-	_ = x[PhaseStopped-6]
+	_ = x[PhaseWaiting-0]
+	_ = x[PhaseInitializing-1]
+	_ = x[PhaseRunning-2]
+	_ = x[PhaseShuttingDown-3]
+	_ = x[PhaseError-4]
+	_ = x[PhaseStopped-5]
 }
 
-const _Phase_name = "UnspecifiedWaitingInitializingRunningShuttingDownErrorStopped"
+const _Phase_name = "WaitingInitializingRunningShuttingDownErrorStopped"
 
-var _Phase_index = [...]uint8{0, 11, 18, 30, 37, 49, 54, 61}
+var _Phase_index = [...]uint8{0, 7, 19, 26, 38, 43, 50}
 
 func (i Phase) String() string {
 	if i < 0 || i >= Phase(len(_Phase_index)-1) {

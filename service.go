@@ -8,6 +8,8 @@ import (
 	sdkTrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.17.0"
 	"log/slog"
+	"os"
+	"strings"
 	"sync"
 
 	"github.com/aledantee/ae"
@@ -120,19 +122,29 @@ func (s *Service) OtelTracerProvider() trace.TracerProvider {
 	return OTelTracerProvider(s.Context())
 }
 
-// Execute runs the service through its complete lifecycle: initialization, running, and shutdown.
-// It manages the service state transitions and handles errors appropriately.
-//
-// The method performs the following steps:
-// 1. Validates that the service has a Run method and is not already running
-// 2. Initializes OpenTelemetry if enabled
-// 3. Calls the Init method if provided
-// 4. Executes the Run method
-// 5. Calls the Shutdown method if provided
-// 6. Sets the final phase based on success or failure
-//
-// Returns an error if any step fails, with context.Canceled errors being treated as normal termination.
-func (s *Service) Execute(ctx context.Context) error {
+func (s *Service) ExecuteExit() {
+	s.ExecuteExitContext(context.Background())
+}
+
+func (s *Service) ExecuteExitContext(ctx context.Context) {
+	if err := s.execute(ctx); err != nil {
+		if !errors.Is(err, context.Canceled) {
+			ae.Print(err)
+		}
+
+		os.Exit(ae.ExitCode(err))
+	}
+}
+
+func (s *Service) Execute() error {
+	return s.execute(context.Background())
+}
+
+func (s *Service) ExecuteContext(ctx context.Context) error {
+	return s.execute(ctx)
+}
+
+func (s *Service) execute(ctx context.Context) error {
 	errBuilder := ae.New().
 		Attr("service.name", s.Name).
 		Attr("service.version", s.Version)
@@ -150,9 +162,13 @@ func (s *Service) Execute(ctx context.Context) error {
 
 	s.runCtx = withName(withVersion(ctx, s.Version), s.Name)
 
+	logger := s.initLogger()
+
 	s.setPhase(PhaseInitializing)
 
 	if OtelEnabled() {
+		logger.Info("initializing OpenTelemetry")
+
 		var err error
 		if err = s.initOtel(ctx); err != nil {
 			return errBuilder.Cause(err).
@@ -161,17 +177,21 @@ func (s *Service) Execute(ctx context.Context) error {
 	}
 
 	if s.Init != nil {
+		logger.Info("initializing service")
+
 		if err := s.Init(s.runCtx); err != nil {
 			return errBuilder.Cause(err).
 				Msg("failed to initialize service")
 		}
 	}
 
+	logger.Info("starting service")
 	s.setPhase(PhaseRunning)
 
 	err := s.Run(s)
 	var shutdownErr error
 	if s.Shutdown != nil {
+		logger.Info("shutting down service")
 		s.setPhase(PhaseShuttingDown)
 		shutdownErr = s.Shutdown(s.runCtx)
 	}
@@ -233,4 +253,39 @@ func (s *Service) initOtel(ctx context.Context) error {
 	s.runCtx = withOTelTracer(s.runCtx, tracer)
 
 	return nil
+}
+
+func (s *Service) initLogger() *slog.Logger {
+	logLevel := slog.LevelInfo
+	switch strings.ToLower(LogLevel()) {
+	case "debug":
+		logLevel = slog.LevelDebug
+	case "warn":
+		logLevel = slog.LevelWarn
+	case "error":
+		logLevel = slog.LevelError
+	}
+
+	var handler slog.Handler
+	if IsDebugEnabled() {
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})
+	} else if IsPrettyLogEnabled() {
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: logLevel,
+		})
+	} else {
+		handler = slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelInfo,
+		})
+	}
+
+	logger := slog.New(handler).
+		With("service.name", s.Name).
+		With("service.version", s.Version)
+
+	s.runCtx = withLogger(s.runCtx, logger)
+
+	return logger
 }

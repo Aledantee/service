@@ -16,3 +16,39 @@ func OtelEnabled() bool {
 
 	return false
 }
+
+func IsDebugEnabled() bool {
+	v, ok := os.LookupEnv("DEBUG")
+	if ok && v != "" {
+		return true
+	}
+
+	return false
+}
+
+func LogLevel() string {
+	v, ok := os.LookupEnv("LOG_LEVEL")
+	if ok && v != "" {
+		return v
+	}
+
+	return "info"
+}
+
+func IsJsonLogEnabled() bool {
+	v, ok := os.LookupEnv("LOG_JSON")
+	if ok && v != "" {
+		return true
+	}
+
+	return false
+}
+
+func IsPrettyLogEnabled() bool {
+	v, ok := os.LookupEnv("LOG_PRETTY")
+	if ok && v != "" {
+		return true
+	}
+
+	return false
+}
