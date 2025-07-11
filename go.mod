@@ -7,7 +7,7 @@ toolchain go1.24.4
 tool golang.org/x/tools/cmd/stringer
 
 require (
-	github.com/aledantee/ae v0.0.9
+	github.com/aledantee/ae v0.0.10
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/metric v1.37.0
 	go.opentelemetry.io/otel/sdk v1.37.0
