@@ -1,6 +1,9 @@
 package service
 
-import "os"
+import (
+	"os"
+	"strings"
+)
 
 // OtelEnabled checks if OpenTelemetry is enabled by checking the OTEL_ENABLED environment variable.
 // Returns true if the environment variable is set to any non-empty value.
@@ -47,30 +50,39 @@ func LogLevel() string {
 	return "info"
 }
 
-// IsJsonLogEnabled checks if JSON logging is enabled by checking the LOG_JSON environment variable.
-// Returns true if the environment variable is set to any non-empty value.
-// Returns false when the variable is unset or set to an empty string.
+// LogFormat retrieves the configured log format from the LOG_FORMAT environment variable.
+// Returns the value of LOG_FORMAT if set to a non-empty string.
+// Returns "json" as the default format when the variable is unset or empty.
 //
-// This provides an opt-in mechanism for structured JSON logging output,
-// which is useful for log aggregation systems and machine-readable log processing.
-func IsJsonLogEnabled() bool {
-	v, ok := os.LookupEnv("LOG_JSON")
+// This function allows services to configure their logging format through
+// environment variables, supporting formats like json and text.
+func LogFormat() string {
+	v, ok := os.LookupEnv("LOG_FORMAT")
 	if ok && v != "" {
+		return v
+	}
+
+	return "json"
+}
+
+// IsJsonLogEnabled checks if JSON log format is enabled by checking the LOG_FORMAT environment variable.
+// Returns true if the LOG_FORMAT environment variable is set to "json" or "structured".
+// Returns false when LOG_FORMAT is unset, empty, or set to any other value.
+func IsJsonLogEnabled() bool {
+	switch strings.ToLower(LogFormat()) {
+	case "json", "structured":
 		return true
 	}
 
 	return false
 }
 
-// IsPrettyLogEnabled checks if pretty logging is enabled by checking the LOG_PRETTY environment variable.
-// Returns true if the environment variable is set to any non-empty value.
-// Returns false when the variable is unset or set to an empty string.
-//
-// This provides an opt-in mechanism for human-readable formatted logging output,
-// which is useful for development and debugging scenarios.
+// IsPrettyLogEnabled checks if pretty text log format is enabled by checking the LOG_FORMAT environment variable.
+// Returns true if the LOG_FORMAT environment variable is set to "text" or "pretty".
+// Returns false when LOG_FORMAT is unset, empty, or set to any other value.
 func IsPrettyLogEnabled() bool {
-	v, ok := os.LookupEnv("LOG_PRETTY")
-	if ok && v != "" {
+	switch strings.ToLower(LogFormat()) {
+	case "text", "pretty":
 		return true
 	}
 
