@@ -87,6 +87,9 @@ func execute(ctx context.Context, svc Service) error {
 	handle.setPhase(PhaseRunning)
 
 	err := svc.Run(handle)
+	if err != nil {
+		handle.Logger().Error("service exited with error", "error", err)
+	}
 
 	handle.Logger().Info("shutting down service")
 	handle.setPhase(PhaseShuttingDown)
@@ -101,7 +104,7 @@ func execute(ctx context.Context, svc Service) error {
 	if err != nil && !errors.Is(err, context.Canceled) {
 		return errBuilder.Cause(err).
 			Related(shutdownErr). // will be ignored if nil
-			Msg("service failed")
+			Msg("service exited with error")
 	} else if shutdownErr != nil && !errors.Is(shutdownErr, context.Canceled) {
 		return errBuilder.Cause(shutdownErr).
 			Msg("service shutdown failed")
