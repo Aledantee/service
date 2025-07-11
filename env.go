@@ -82,7 +82,7 @@ func IsJsonLogEnabled() bool {
 // Returns false when LOG_FORMAT is unset, empty, or set to any other value.
 func IsPrettyLogEnabled() bool {
 	switch strings.ToLower(LogFormat()) {
-	case "text", "pretty":
+	case "text", "console", "pretty":
 		return true
 	}
 
